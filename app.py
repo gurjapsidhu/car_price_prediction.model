@@ -6,39 +6,34 @@ from sklearn.preprocessing import StandardScaler
 # Configure page
 st.set_page_config(page_title="Car Price Prediction", page_icon="🚗", layout="wide")
 
-# App title and menu
-st.markdown(
+# App title
+st.title("🚗 Car Price Prediction App")
+
+# Sidebar menu at the top
+st.sidebar.markdown(
     """
     <style>
-    .main-title {
-        font-size: 36px;
+    .menu-title {
+        font-size: 18px;
         color: #4CAF50;
-        text-align: center;
+        font-weight: bold;
         margin-bottom: 10px;
     }
-    .menu-bar {
-        display: flex;
-        justify-content: center;
-        background-color: #4CAF50;
-        padding: 10px;
-        border-radius: 5px;
-        margin-bottom: 20px;
-    }
     .menu-item {
-        margin: 0 15px;
-        color: white;
-        font-size: 16px;
-        font-weight: bold;
+        padding: 10px 5px;
+        font-size: 14px;
+        border-radius: 5px;
         cursor: pointer;
+        color: #4CAF50;
+        background-color: #f9f9f9;
+        margin-bottom: 5px;
     }
     .menu-item:hover {
-        text-decoration: underline;
+        background-color: #4CAF50;
+        color: white;
     }
-    .sidebar-header {
-        font-size: 20px;
-        color: #333;
-        font-weight: bold;
-        margin-bottom: 15px;
+    .sidebar-section {
+        margin-bottom: 20px;
     }
     .prediction-box {
         background-color: #d4edda;
@@ -55,19 +50,24 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-st.markdown('<div class="main-title">🚗 Car Price Prediction App</div>', unsafe_allow_html=True)
-
-menu_selection = st.markdown(
-    """
-    <div class="menu-bar">
-        <span class="menu-item">🏠 Home</span>
-        <span class="menu-item">📊 Insights</span>
-        <span class="menu-item">📖 About</span>
-        <span class="menu-item">👨‍💻 Developer</span>
-    </div>
-    """,
-    unsafe_allow_html=True,
+st.sidebar.markdown('<div class="menu-title">Menu</div>', unsafe_allow_html=True)
+menu_selection = st.sidebar.radio(
+    "",
+    ["🏠 Home", "📊 Data Insights", "📖 About", "👨‍💻 Developer"],
+    index=0,
+    label_visibility="collapsed",
 )
+
+# Sidebar inputs
+st.sidebar.markdown('<div class="menu-title">Enter Car Details</div>', unsafe_allow_html=True)
+
+present_price = st.sidebar.number_input("Present Price (in lakhs)", min_value=0.0, step=0.1)
+kms_driven = st.sidebar.number_input("Kilometers Driven", min_value=0, step=100)
+year = st.sidebar.number_input("Year of Purchase", min_value=2000, max_value=2023, step=1)
+fuel_type = st.sidebar.selectbox("Fuel Type", ["Petrol", "Diesel", "CNG"])
+seller_type = st.sidebar.selectbox("Seller Type", ["Dealer", "Individual"])
+transmission = st.sidebar.selectbox("Transmission", ["Manual", "Automatic"])
+owners = st.sidebar.number_input("Number of Previous Owners", min_value=0, step=1)
 
 # Function to load model and scaler
 def load_model():
@@ -79,22 +79,6 @@ def load_model():
         st.error("🚨 Error: Model or Scaler file not found. Ensure 'lasso_model.pkl' and 'scaler.pkl' are in the same directory.")
         st.stop()
 
-# Sidebar for inputs
-st.sidebar.markdown('<div class="sidebar-header">Enter Car Details</div>', unsafe_allow_html=True)
-
-present_price = st.sidebar.number_input("Present Price (in lakhs)", min_value=0.0, step=0.1)
-kms_driven = st.sidebar.number_input("Kilometers Driven", min_value=0, step=100)
-year = st.sidebar.number_input("Year of Purchase", min_value=2000, max_value=2023, step=1)
-fuel_type = st.sidebar.selectbox("Fuel Type", ["Petrol", "Diesel", "CNG"])
-seller_type = st.sidebar.selectbox("Seller Type", ["Dealer", "Individual"])
-transmission = st.sidebar.selectbox("Transmission", ["Manual", "Automatic"])
-owners = st.sidebar.number_input("Number of Previous Owners", min_value=0, step=1)
-
-# Mapping categorical inputs
-fuel_map = {"Petrol": 0, "Diesel": 1, "CNG": 2}
-seller_map = {"Dealer": 0, "Individual": 1}
-trans_map = {"Manual": 0, "Automatic": 1}
-
 # Predict button
 if st.sidebar.button("Predict Price"):
     model, scaler = load_model()
@@ -104,19 +88,19 @@ if st.sidebar.button("Predict Price"):
         present_price,
         kms_driven,
         2024 - year,
-        fuel_map[fuel_type],
-        seller_map[seller_type],
-        trans_map[transmission],
-        owners
+        {"Petrol": 0, "Diesel": 1, "CNG": 2}[fuel_type],
+        {"Dealer": 0, "Individual": 1}[seller_type],
+        {"Manual": 0, "Automatic": 1}[transmission],
+        owners,
     ]).reshape(1, -1)
 
     # Scale the features
     features_scaled = scaler.transform(features)
 
-    # Predict price
-    predicted_price = model.predict(features_scaled)[0]
+    # Predict price and handle negatives
+    predicted_price = max(model.predict(features_scaled)[0], 0)
 
-    # Format price with commas for thousands and proper units
+    # Format price with commas
     formatted_price = f"₹ {predicted_price:,.2f} Lakhs"
     st.markdown(
         f"""
@@ -128,7 +112,37 @@ if st.sidebar.button("Predict Price"):
         unsafe_allow_html=True,
     )
 
-# Footer section
-st.sidebar.markdown("---")
-st.sidebar.markdown("Developed by **Gurjap Singh** | Age 17")
-st.sidebar.markdown("[LinkedIn Profile](https://www.linkedin.com/in/gurjap-singh-46696332a/)")
+# Additional menu content
+if menu_selection == "📊 Data Insights":
+    st.header("📊 Data Insights")
+    uploaded_file = st.file_uploader("Upload your dataset for analysis", type=["csv"])
+
+    if uploaded_file:
+        import pandas as pd
+        import seaborn as sns
+        import matplotlib.pyplot as plt
+
+        data = pd.read_csv(uploaded_file)
+        st.write("Dataset Preview:")
+        st.dataframe(data.head())
+
+        st.write("🚗 Fuel Type Distribution:")
+        plt.figure(figsize=(8, 6))
+        sns.countplot(data=data, x="Fuel_Type", palette="coolwarm")
+        st.pyplot(plt)
+
+        st.write("💲 Selling Price Distribution:")
+        plt.figure(figsize=(8, 6))
+        sns.histplot(data["Selling_Price"], kde=True, bins=30, color="green")
+        st.pyplot(plt)
+
+elif menu_selection == "📖 About":
+    st.header("📖 About the App")
+    st.write("This application predicts the selling price of used cars based on various features.")
+
+elif menu_selection == "👨‍💻 Developer":
+    st.header("👨‍💻 About the Developer")
+    st.write("Name: Gurjap Singh")
+    st.write("Age: 17")
+    st.write("Enthusiast in AI and Machine Learning.")
+    st.write("[LinkedIn Profile](https://www.linkedin.com/in/gurjap-singh-46696332a/)")
