@@ -3,6 +3,9 @@ import numpy as np
 import joblib
 from sklearn.preprocessing import StandardScaler
 
+# Set Streamlit page configuration (this should be the first command)
+st.set_page_config(page_title="Car Price Prediction", layout="wide", page_icon="🚗")
+
 # Custom CSS for styling
 st.markdown("""
     <style>
@@ -63,7 +66,6 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # App title and configuration
-st.set_page_config(page_title="Car Price Prediction", layout="wide", page_icon="🚗")
 st.title("🚗 **Car Price Prediction App**")
 
 # Function to load model and scaler
