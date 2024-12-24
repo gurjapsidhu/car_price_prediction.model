@@ -1,133 +1,134 @@
 import streamlit as st
 import numpy as np
 import joblib
-import pandas as pd
 from sklearn.preprocessing import StandardScaler
-import matplotlib.pyplot as plt
-import seaborn as sns
 
-# App title and configuration
-st.set_page_config(page_title="Car Price Prediction", layout="wide", page_icon="🚗")
-st.title("🚗 **Car Price Prediction App**")
+# Configure page
+st.set_page_config(page_title="Car Price Prediction", page_icon="🚗", layout="wide")
+
+# App title and menu
+st.markdown(
+    """
+    <style>
+    .main-title {
+        font-size: 36px;
+        color: #4CAF50;
+        text-align: center;
+        margin-bottom: 10px;
+    }
+    .menu-bar {
+        display: flex;
+        justify-content: center;
+        background-color: #4CAF50;
+        padding: 10px;
+        border-radius: 5px;
+        margin-bottom: 20px;
+    }
+    .menu-item {
+        margin: 0 15px;
+        color: white;
+        font-size: 16px;
+        font-weight: bold;
+        cursor: pointer;
+    }
+    .menu-item:hover {
+        text-decoration: underline;
+    }
+    .sidebar-header {
+        font-size: 20px;
+        color: #333;
+        font-weight: bold;
+        margin-bottom: 15px;
+    }
+    .prediction-box {
+        background-color: #d4edda;
+        padding: 15px;
+        border-radius: 10px;
+        margin-top: 20px;
+        text-align: center;
+    }
+    .prediction-box h3 {
+        color: #155724;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
+st.markdown('<div class="main-title">🚗 Car Price Prediction App</div>', unsafe_allow_html=True)
+
+menu_selection = st.markdown(
+    """
+    <div class="menu-bar">
+        <span class="menu-item">🏠 Home</span>
+        <span class="menu-item">📊 Insights</span>
+        <span class="menu-item">📖 About</span>
+        <span class="menu-item">👨‍💻 Developer</span>
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
 
 # Function to load model and scaler
 def load_model():
     try:
-        model = joblib.load('lasso_model.pkl')  # Ensure the file is in the same directory
-        scaler = joblib.load('scaler.pkl')      # Ensure the file is in the same directory
+        model = joblib.load("lasso_model.pkl")
+        scaler = joblib.load("scaler.pkl")
         return model, scaler
     except FileNotFoundError:
-        st.error("🚨 **Error:** Model or Scaler file not found. Please ensure the files 'lasso_model.pkl' and 'scaler.pkl' are present.")
+        st.error("🚨 Error: Model or Scaler file not found. Ensure 'lasso_model.pkl' and 'scaler.pkl' are in the same directory.")
         st.stop()
 
-# Sidebar for user input
-with st.sidebar:
-    st.image("https://www.carlogos.org/car-logos/audi-logo.png", width=150)
-    st.header("📋 **Enter Car Details**")
-    
-    present_price = st.slider("💰 Present Price (in lakhs)", min_value=0.0, max_value=100.0, step=0.1, value=5.0)
-    kms_driven = st.number_input("📏 Kilometers Driven", min_value=0, max_value=500000, step=100, value=10000)
-    year = st.slider("📅 Year of Purchase", min_value=2000, max_value=2023, step=1, value=2015)
-    fuel_type = st.selectbox("⛽ Fuel Type", ["Petrol", "Diesel", "CNG"])
-    seller_type = st.selectbox("🧑‍💼 Seller Type", ["Dealer", "Individual"])
-    transmission = st.selectbox("⚙️ Transmission", ["Manual", "Automatic"])
-    owners = st.slider("👨‍👩‍👧‍👦 Number of Previous Owners", min_value=0, max_value=5, step=1, value=0)
+# Sidebar for inputs
+st.sidebar.markdown('<div class="sidebar-header">Enter Car Details</div>', unsafe_allow_html=True)
 
-# Map categorical features
-fuel_type_mapping = {"Petrol": 0, "Diesel": 1, "CNG": 2}
-seller_type_mapping = {"Dealer": 0, "Individual": 1}
-transmission_mapping = {"Manual": 0, "Automatic": 1}
+present_price = st.sidebar.number_input("Present Price (in lakhs)", min_value=0.0, step=0.1)
+kms_driven = st.sidebar.number_input("Kilometers Driven", min_value=0, step=100)
+year = st.sidebar.number_input("Year of Purchase", min_value=2000, max_value=2023, step=1)
+fuel_type = st.sidebar.selectbox("Fuel Type", ["Petrol", "Diesel", "CNG"])
+seller_type = st.sidebar.selectbox("Seller Type", ["Dealer", "Individual"])
+transmission = st.sidebar.selectbox("Transmission", ["Manual", "Automatic"])
+owners = st.sidebar.number_input("Number of Previous Owners", min_value=0, step=1)
 
-fuel_type_encoded = fuel_type_mapping[fuel_type]
-seller_type_encoded = seller_type_mapping[seller_type]
-transmission_encoded = transmission_mapping[transmission]
+# Mapping categorical inputs
+fuel_map = {"Petrol": 0, "Diesel": 1, "CNG": 2}
+seller_map = {"Dealer": 0, "Individual": 1}
+trans_map = {"Manual": 0, "Automatic": 1}
 
-# Styling the layout
-st.markdown(
-    """
-    <style>
-    .predicted-price {
-        background-color: #d4edda;
-        padding: 20px;
-        font-size: 24px;
-        border-radius: 10px;
-        color: #155724;
-        text-align: center;
-        font-weight: bold;
-    }
-    .sidebar .sidebar-content {
-        background-color: #f4f4f9;
-    }
-    .stButton>button {
-        background-color: #4CAF50;
-        color: white;
-        font-size: 16px;
-        padding: 10px 20px;
-    }
-    .stSlider > div {
-        font-size: 14px;
-    }
-    </style>
-    """, unsafe_allow_html=True
-)
-
-# Prediction Button
-if st.sidebar.button("🚀 Predict Price"):
+# Predict button
+if st.sidebar.button("Predict Price"):
     model, scaler = load_model()
-    
-    # Prepare input data for prediction
-    car_features = np.array([
+
+    # Prepare input for prediction
+    features = np.array([
         present_price,
         kms_driven,
         2024 - year,
-        fuel_type_encoded,
-        seller_type_encoded,
-        transmission_encoded,
+        fuel_map[fuel_type],
+        seller_map[seller_type],
+        trans_map[transmission],
         owners
     ]).reshape(1, -1)
 
-    # Scale the features using the scaler
-    car_features_scaled = scaler.transform(car_features)
-    
-    # Predict the car price
-    predicted_price = model.predict(car_features_scaled)[0]
-    
-    # Display the predicted price
-    st.subheader("🔮 **Predicted Selling Price**")
+    # Scale the features
+    features_scaled = scaler.transform(features)
+
+    # Predict price
+    predicted_price = model.predict(features_scaled)[0]
+
+    # Format price with commas for thousands and proper units
+    formatted_price = f"₹ {predicted_price:,.2f} Lakhs"
     st.markdown(
         f"""
-        <div class="predicted-price">
-        💲 ₹ {predicted_price:,.2f} Lakhs
+        <div class="prediction-box">
+            <h3>Predicted Selling Price</h3>
+            <h1>{formatted_price}</h1>
         </div>
-        """, unsafe_allow_html=True
-    )
-    st.balloons()
-
-# About the App and Developer sections
-menu = st.sidebar.radio("📖 **Menu**", ["About App", "About Developer"])
-
-if menu == "About App":
-    st.header("📄 About the App")
-    st.write(
-        """
-        This app predicts the selling price of used cars based on:
-        - Present price of the car.
-        - Kilometers driven.
-        - Year of purchase.
-        - Fuel type, seller type, and transmission.
-        - Number of previous owners.
-
-        The model used is a **Lasso Regression** trained on a car sales dataset.
-        """
+        """,
+        unsafe_allow_html=True,
     )
 
-elif menu == "About Developer":
-    st.header("👨‍💻 About the Developer")
-    st.write(
-        """
-        - **Name:** Gurjap Singh
-        - **Age:** 17
-        - **Enthusiast in AI and Machine Learning**
-        - **[LinkedIn](https://www.linkedin.com/in/gurjap-singh-46696332a/)** 
-        """
-    )
+# Footer section
+st.sidebar.markdown("---")
+st.sidebar.markdown("Developed by **Gurjap Singh** | Age 17")
+st.sidebar.markdown("[LinkedIn Profile](https://www.linkedin.com/in/gurjap-singh-46696332a/)")
