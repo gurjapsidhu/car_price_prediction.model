@@ -1,10 +1,7 @@
 import streamlit as st
 import numpy as np
 import joblib
-import pandas as pd
 from sklearn.preprocessing import StandardScaler
-import matplotlib.pyplot as plt
-import seaborn as sns
 
 # App title and configuration
 st.set_page_config(page_title="Car Price Prediction", layout="wide", page_icon="🚗")
@@ -22,7 +19,7 @@ def load_model():
 
 # Sidebar for user input
 with st.sidebar:
-    st.image("https://upload.wikimedia.org/wikipedia/commons/a/a6/Car_Icon.svg", width=150)  # A simple car icon
+    st.image("https://upload.wikimedia.org/wikipedia/commons/thumb/6/6c/Car_icon.svg/200px-Car_icon.svg.png", width=150)
     st.header("📋 **Enter Car Details**")
     
     present_price = st.slider("💰 Purchase Price (in lakhs)", min_value=0.0, max_value=100.0, step=0.1, value=5.0)
@@ -71,35 +68,6 @@ st.markdown(
     """, unsafe_allow_html=True
 )
 
-# Menu for About App and About Developer
-menu = st.sidebar.radio("📖 **Menu**", ["About App", "About Developer"])
-
-if menu == "About App":
-    st.header("📄 About the App")
-    st.write(
-        """
-        This app predicts the selling price of used cars based on:
-        - **Purchase price** of the car.
-        - **Kilometers driven**.
-        - **Year of purchase**.
-        - **Fuel type**, **seller type**, and **transmission**.
-        - **Number of previous owners**.
-
-        The model used is a **Lasso Regression** trained on a car sales dataset.
-        """
-    )
-
-elif menu == "About Developer":
-    st.header("👨‍💻 About the Developer")
-    st.write(
-        """
-        - **Name:** Gurjap Singh
-        - **Age:** 17
-        - **Enthusiast in AI and Machine Learning**
-        - **[LinkedIn](https://www.linkedin.com/in/gurjap-singh-46696332a/)**
-        """
-    )
-
 # Prediction Button
 if st.sidebar.button("🚀 Predict Price"):
     model, scaler = load_model()
@@ -121,10 +89,11 @@ if st.sidebar.button("🚀 Predict Price"):
     # Predict the car price
     predicted_price = model.predict(car_features_scaled)[0]
     
-    # Format the price
-    formatted_price = f"{predicted_price:,.2f}".split(".")
-    formatted_price = f"{formatted_price[0]} Lakh {int(formatted_price[1]):04} Thousand"
-    
+    # Format the price to show two decimal points and remove commas
+    formatted_price = f"{predicted_price:,.2f}"  # Rounded to two decimal places
+    formatted_price = formatted_price.replace(",", "")  # Remove commas
+    formatted_price = f"{formatted_price} Lakh"  # Add 'Lakh' at the end
+
     # Display the predicted price
     st.subheader("🔮 **Predicted Selling Price**")
     st.markdown(
@@ -135,3 +104,32 @@ if st.sidebar.button("🚀 Predict Price"):
         """, unsafe_allow_html=True
     )
     st.balloons()
+
+# About the App and Developer sections
+menu = st.sidebar.radio("📖 **Menu**", ["About App", "About Developer"])
+
+if menu == "About App":
+    st.header("📄 About the App")
+    st.write(
+        """
+        This app predicts the selling price of used cars based on:
+        - Purchase price of the car.
+        - Kilometers driven.
+        - Year of purchase.
+        - Fuel type, seller type, and transmission.
+        - Number of previous owners.
+
+        The model used is a **Lasso Regression** trained on a car sales dataset.
+        """
+    )
+
+elif menu == "About Developer":
+    st.header("👨‍💻 About the Developer")
+    st.write(
+        """
+        - **Name:** Gurjap Singh
+        - **Age:** 17
+        - **Enthusiast in AI and Machine Learning**
+        - **[LinkedIn](https://www.linkedin.com/in/gurjap-singh-46696332a/)** 
+        """
+    )
