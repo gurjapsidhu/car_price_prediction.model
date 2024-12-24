@@ -76,24 +76,23 @@ if st.sidebar.button("🚀 Predict Price"):
     car_features = np.array([
         present_price,
         kms_driven,
-        2024 - year,
+        2024 - year,  # Age of the car
         fuel_type_encoded,
         seller_type_encoded,
         transmission_encoded,
         owners
     ]).reshape(1, -1)
 
-    # Scale the features using the scaler
+    # Apply the same scaler to input features
     car_features_scaled = scaler.transform(car_features)
     
     # Predict the car price
     predicted_price = model.predict(car_features_scaled)[0]
     
-    # Correct scaling - model might be outputting in larger values, fix this
-    # Format the predicted price to show two decimal points
+    # Format the predicted price (rounding to 2 decimal places)
     predicted_price = round(predicted_price, 2)
     
-    # Format the price to show two decimal places and remove commas
+    # Convert predicted price to lakhs and format output
     formatted_price = f"{predicted_price:,.2f}"  # Rounded to two decimal places
     formatted_price = formatted_price.replace(",", "")  # Remove commas
     formatted_price = f"{formatted_price} Lakh"  # Add 'Lakh' at the end
