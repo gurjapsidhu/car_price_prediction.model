@@ -1,16 +1,19 @@
 import streamlit as st
 import numpy as np
 import joblib
+import pandas as pd
+from sklearn.preprocessing import StandardScaler
+from sklearn.linear_model import Lasso
 
 # App title and configuration
 st.set_page_config(page_title="Car Price Prediction", layout="wide", page_icon="🚗")
 st.title("🚗 **Car Price Prediction App**")
 
-# Function to load model and scaler
+# Function to load the trained model and scaler
 def load_model():
     try:
-        model = joblib.load('lasso_model.pkl')  # Ensure the model file is in the same directory
-        scaler = joblib.load('scaler.pkl')      # Ensure the scaler file is in the same directory
+        model = joblib.load('lasso_model.pkl')  # Ensure the file is in the same directory
+        scaler = joblib.load('scaler.pkl')      # Ensure the file is in the same directory
         return model, scaler
     except FileNotFoundError:
         st.error("🚨 **Error:** Model or Scaler file not found. Please ensure the files 'lasso_model.pkl' and 'scaler.pkl' are present.")
@@ -18,9 +21,11 @@ def load_model():
 
 # Sidebar for user input
 with st.sidebar:
+    st.image("https://www.carlogos.org/car-logos/audi-logo.png", width=150)  # You can change this logo if needed
     st.header("📋 **Enter Car Details**")
     
-    present_price = st.slider("💰 **Purchase Price** (in lakhs)", min_value=0.0, max_value=100.0, step=0.1, value=5.0)
+    # Input fields for car details
+    present_price = st.slider("💰 **Purchase Price (in lakhs)**", min_value=0.0, max_value=100.0, step=0.1, value=5.0)
     kms_driven = st.number_input("📏 **Kilometers Driven**", min_value=0, max_value=500000, step=100, value=10000)
     year = st.slider("📅 **Year of Purchase**", min_value=2000, max_value=2023, step=1, value=2015)
     fuel_type = st.selectbox("⛽ **Fuel Type**", ["Petrol", "Diesel", "CNG"])
@@ -72,9 +77,9 @@ if st.sidebar.button("🚀 Predict Price"):
     
     # Prepare input data for prediction
     car_features = np.array([
-        present_price,  # Purchase price
+        present_price,  # The 'present_price' input will be used as the initial car purchase price
         kms_driven,
-        2024 - year,  # Current year minus purchase year
+        2024 - year,  # Age of the car
         fuel_type_encoded,
         seller_type_encoded,
         transmission_encoded,
@@ -84,15 +89,18 @@ if st.sidebar.button("🚀 Predict Price"):
     # Scale the features using the scaler
     car_features_scaled = scaler.transform(car_features)
     
-    # Predict the car price
+    # Predict the car price (selling price)
     predicted_price = model.predict(car_features_scaled)[0]
     
-    # Display the predicted price
+    # Convert the predicted price to Lakhs and format it correctly
+    predicted_price_in_lakhs = round(predicted_price, 2)
+    
+    # Display the predicted price in lakhs
     st.subheader("🔮 **Predicted Selling Price**")
     st.markdown(
         f"""
         <div class="predicted-price">
-        💲 ₹ {predicted_price:,.2f} Lakhs
+        💲 ₹ {predicted_price_in_lakhs:,.2f} Lakhs
         </div>
         """, unsafe_allow_html=True
     )
@@ -105,12 +113,12 @@ if menu == "About App":
     st.header("📄 About the App")
     st.write(
         """
-        This app predicts the **selling price** of used cars based on:
-        - **Purchase price** of the car.
-        - **Kilometers driven**.
-        - **Year of purchase**.
-        - **Fuel type**, **seller type**, and **transmission**.
-        - **Number of previous owners**.
+        This app predicts the selling price of used cars based on:
+        - The original purchase price of the car.
+        - Kilometers driven.
+        - Year of purchase.
+        - Fuel type, seller type, and transmission.
+        - Number of previous owners.
 
         The model used is a **Lasso Regression** trained on a car sales dataset.
         """
