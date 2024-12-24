@@ -134,10 +134,11 @@ st.markdown("""
     ---
     🛠️ Built with ❤️ using Streamlit and Scikit-learn. For more details, contact the developer on LinkedIn.
 """)
-import joblib
+
 
 # Save the trained model
 joblib.dump(model, 'lasso_model.pkl')
 
 # Save the scaler (if you are using it for feature scaling)
 joblib.dump(scaler, 'scaler.pkl')
+
