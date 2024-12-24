@@ -1,86 +1,137 @@
 import streamlit as st
 import numpy as np
 import joblib
+import pandas as pd
 from sklearn.preprocessing import StandardScaler
+import matplotlib.pyplot as plt
+import seaborn as sns
 
-# Load the trained model and scaler
-model = joblib.load('random_forest_model.pkl')
-scaler = joblib.load('scaler.pkl')
+# App title and configuration
+st.set_page_config(page_title="Car Price Prediction", layout="wide", page_icon="🚗")
+st.title("🚗 **Car Price Prediction App**")
 
-# Set the page title and layout
-st.set_page_config(page_title="Car Price Prediction", layout="wide")
+# Function to load model and scaler
+def load_model():
+    try:
+        model = joblib.load('lasso_model.pkl')  # Ensure the file is in the same directory
+        scaler = joblib.load('scaler.pkl')      # Ensure the file is in the same directory
+        return model, scaler
+    except FileNotFoundError:
+        st.error("🚨 **Error:** Model or Scaler file not found. Please ensure the files 'lasso_model.pkl' and 'scaler.pkl' are present.")
+        st.stop()
 
-# Create a function to format price
-def format_price(price):
-    lakhs = int(price)
-    thousands = int((price - lakhs) * 100)
+# Sidebar for user input
+with st.sidebar:
+    st.image("https://upload.wikimedia.org/wikipedia/commons/a/a6/Car_Icon.svg", width=150)  # A simple car icon
+    st.header("📋 **Enter Car Details**")
     
-    if lakhs > 0:
-        lakh_str = f"{lakhs} Lakh"
-    else:
-        lakh_str = ""
-    
-    if thousands > 0:
-        thousand_str = f"{thousands} Thousand"
-    else:
-        thousand_str = ""
-    
-    return f"💲 ₹ {lakh_str} {thousand_str}".strip()
+    present_price = st.slider("💰 Purchase Price (in lakhs)", min_value=0.0, max_value=100.0, step=0.1, value=5.0)
+    kms_driven = st.number_input("📏 Kilometers Driven", min_value=0, max_value=500000, step=100, value=10000)
+    year = st.slider("📅 Year of Purchase", min_value=2000, max_value=2023, step=1, value=2015)
+    fuel_type = st.selectbox("⛽ Fuel Type", ["Petrol", "Diesel", "CNG"])
+    seller_type = st.selectbox("🧑‍💼 Seller Type", ["Dealer", "Individual"])
+    transmission = st.selectbox("⚙️ Transmission", ["Manual", "Automatic"])
+    owners = st.slider("👨‍👩‍👧‍👦 Number of Previous Owners", min_value=0, max_value=5, step=1, value=0)
 
-# Title of the app
-st.title("Car Selling Price Prediction")
+# Map categorical features
+fuel_type_mapping = {"Petrol": 0, "Diesel": 1, "CNG": 2}
+seller_type_mapping = {"Dealer": 0, "Individual": 1}
+transmission_mapping = {"Manual": 0, "Automatic": 1}
 
-# Create a sidebar with the input menu on top
-st.sidebar.header("Enter Car Details")
+fuel_type_encoded = fuel_type_mapping[fuel_type]
+seller_type_encoded = seller_type_mapping[seller_type]
+transmission_encoded = transmission_mapping[transmission]
 
-# Input fields for the user to provide data
-present_price = st.sidebar.slider("💰 Purchase Price (in Lakhs)", 0.0, 100.0, 5.0, 0.1)
-kms_driven = st.sidebar.slider("📏 Kilometers Driven", 1000, 200000, 10000)
-year_of_purchase = st.sidebar.slider("📅 Year of Purchase", 2000, 2023, 2015)
-fuel_type = st.sidebar.selectbox("⛽ Fuel Type", ["Petrol", "Diesel", "CNG"])
-seller_type = st.sidebar.selectbox("🧑‍💼 Seller Type", ["Individual", "Dealer"])
-transmission = st.sidebar.selectbox("⚙️ Transmission", ["Manual", "Automatic"])
-owner = st.sidebar.selectbox("👨‍👩‍👧‍👦 Number of Previous Owners", [0, 1, 2, 3, 4, 5])
-
-# Convert categorical values to numeric as per your model's encoding
-fuel_type_map = {"Petrol": 0, "Diesel": 1, "CNG": 2}
-transmission_map = {"Manual": 0, "Automatic": 1}
-seller_type_map = {"Individual": 1, "Dealer": 0}
-
-fuel_type_val = fuel_type_map[fuel_type]
-transmission_val = transmission_map[transmission]
-seller_type_val = seller_type_map[seller_type]
-
-# Prepare the input for prediction
-input_data = np.array([present_price, kms_driven, year_of_purchase, fuel_type_val, seller_type_val, transmission_val, owner]).reshape(1, -1)
-
-# Scale the input using the scaler
-input_scaled = scaler.transform(input_data)
-
-# Make the prediction
-predicted_price = model.predict(input_scaled)[0]
-
-# Display the predicted price in the desired format
-formatted_price = format_price(predicted_price)
-
-# Show the prediction result
-st.subheader(f"Predicted Selling Price: {formatted_price}")
-
-# Add some more UI elements (optional) to improve the design
-st.markdown("""
+# Styling the layout
+st.markdown(
+    """
     <style>
-    .stButton > button {
+    .predicted-price {
+        background-color: #d4edda;
+        padding: 20px;
+        font-size: 24px;
+        border-radius: 10px;
+        color: #155724;
+        text-align: center;
+        font-weight: bold;
+    }
+    .sidebar .sidebar-content {
+        background-color: #f4f4f9;
+    }
+    .stButton>button {
         background-color: #4CAF50;
         color: white;
-        font-size: 18px;
-        border-radius: 10px;
-        width: 100%;
+        font-size: 16px;
+        padding: 10px 20px;
     }
-    .stSidebar {
-        width: 300px;
+    .stSlider > div {
+        font-size: 14px;
     }
     </style>
-    """, unsafe_allow_html=True)
+    """, unsafe_allow_html=True
+)
 
-# Footer (Optional) with a disclaimer
-st.markdown("### Disclaimer: The predictions are based on historical data and may not reflect the current market conditions.")
+# Menu for About App and About Developer
+menu = st.sidebar.radio("📖 **Menu**", ["About App", "About Developer"])
+
+if menu == "About App":
+    st.header("📄 About the App")
+    st.write(
+        """
+        This app predicts the selling price of used cars based on:
+        - **Purchase price** of the car.
+        - **Kilometers driven**.
+        - **Year of purchase**.
+        - **Fuel type**, **seller type**, and **transmission**.
+        - **Number of previous owners**.
+
+        The model used is a **Lasso Regression** trained on a car sales dataset.
+        """
+    )
+
+elif menu == "About Developer":
+    st.header("👨‍💻 About the Developer")
+    st.write(
+        """
+        - **Name:** Gurjap Singh
+        - **Age:** 17
+        - **Enthusiast in AI and Machine Learning**
+        - **[LinkedIn](https://www.linkedin.com/in/gurjap-singh-46696332a/)**
+        """
+    )
+
+# Prediction Button
+if st.sidebar.button("🚀 Predict Price"):
+    model, scaler = load_model()
+    
+    # Prepare input data for prediction
+    car_features = np.array([
+        present_price,
+        kms_driven,
+        2024 - year,
+        fuel_type_encoded,
+        seller_type_encoded,
+        transmission_encoded,
+        owners
+    ]).reshape(1, -1)
+
+    # Scale the features using the scaler
+    car_features_scaled = scaler.transform(car_features)
+    
+    # Predict the car price
+    predicted_price = model.predict(car_features_scaled)[0]
+    
+    # Format the price
+    formatted_price = f"{predicted_price:,.2f}".split(".")
+    formatted_price = f"{formatted_price[0]} Lakh {int(formatted_price[1]):04} Thousand"
+    
+    # Display the predicted price
+    st.subheader("🔮 **Predicted Selling Price**")
+    st.markdown(
+        f"""
+        <div class="predicted-price">
+        💲 ₹ {formatted_price}
+        </div>
+        """, unsafe_allow_html=True
+    )
+    st.balloons()
