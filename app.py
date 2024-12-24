@@ -85,13 +85,27 @@ if st.sidebar.button("🚀 Predict Price"):
         transmission_encoded,
         owners
     ]).reshape(1, -1)
+    
+    # Debugging: Show the input features to verify them
+    st.write("🔧 **Input Features**: ", car_features)
 
     # Scale the features using the scaler
-    car_features_scaled = scaler.transform(car_features)
+    try:
+        car_features_scaled = scaler.transform(car_features)
+    except Exception as e:
+        st.error(f"🚨 **Error in scaling features**: {str(e)}")
+        st.stop()
+    
+    # Debugging: Show the scaled features
+    st.write("🔧 **Scaled Features**: ", car_features_scaled)
     
     # Predict the car price
-    predicted_price = model.predict(car_features_scaled)[0]
-    
+    try:
+        predicted_price = model.predict(car_features_scaled)[0]
+    except Exception as e:
+        st.error(f"🚨 **Error in prediction**: {str(e)}")
+        st.stop()
+
     # Ensure the price is not negative
     predicted_price = max(predicted_price, 0)
     
