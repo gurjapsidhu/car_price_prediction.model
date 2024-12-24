@@ -1,7 +1,6 @@
 import streamlit as st
-import pandas as pd
 import numpy as np
-from sklearn.linear_model import Lasso
+import pandas as pd
 import joblib
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -28,7 +27,7 @@ if menu == "Predict Car Price":
     # Input fields for car features
     st.sidebar.header("Provide the following details:")
 
-    present_price = st.sidebar.number_input("Purchase Price (in lakhs)", min_value=0.0, step=0.1)
+    present_price = st.sidebar.number_input("Present Price (in lakhs)", min_value=0.0, step=0.1)
     kms_driven = st.sidebar.number_input("Kilometers Driven", min_value=0, step=100)
     year = st.sidebar.number_input("Year of Purchase", min_value=2000, step=1)
     fuel_type = st.sidebar.selectbox("Fuel Type", options=["Petrol", "Diesel", "CNG"])
@@ -53,7 +52,7 @@ if menu == "Predict Car Price":
             car_features = np.array([
                 present_price,
                 kms_driven,
-                2024 - year,  # Age of the car
+                2024 - year,  # Calculate the age of the car
                 fuel_type_encoded,
                 seller_type_encoded,
                 transmission_encoded,
@@ -62,8 +61,13 @@ if menu == "Predict Car Price":
 
             # Predicting price
             predicted_price = model.predict(car_features)[0]
-            st.subheader("Predicted Selling Price")
-            st.write(f"₹ {predicted_price:.2f} lakhs")
+
+            # Convert predicted price to lakhs (if needed, divide by 100,000)
+            predicted_price_in_lakhs = predicted_price / 100000
+
+            # Display result with formatted currency in lakhs
+            st.subheader("💰 Predicted Selling Price")
+            st.write(f"**₹ {predicted_price_in_lakhs:,.2f} Lakh**")
 
     # Visualization option
     if st.sidebar.checkbox("Show Data Insights"):
@@ -78,14 +82,11 @@ if menu == "Predict Car Price":
             st.write("Fuel Type Distribution:")
             plt.figure(figsize=(8, 6))
             sns.countplot(data=data, x="Fuel_Type")
-            plt.title("Fuel Type Distribution")
-            plt.xticks(rotation=45)
             st.pyplot(plt)
 
             st.write("Selling Price Distribution:")
             plt.figure(figsize=(8, 6))
             sns.histplot(data["Selling_Price"], kde=True, bins=30)
-            plt.title("Selling Price Distribution")
             st.pyplot(plt)
 
 elif menu == "About App & Model":
