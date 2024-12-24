@@ -10,61 +10,6 @@ import seaborn as sns
 st.set_page_config(page_title="Car Price Prediction", layout="wide", page_icon="🚗")
 st.title("🚗 **Car Price Prediction App**")
 
-# Custom styles for modern UI design
-st.markdown(
-    """
-    <style>
-    body {
-        font-family: 'Lato', sans-serif;
-        background-color: #f4f6f9;
-        color: #333;
-    }
-    .sidebar {
-        background-color: #f8f9fa;
-        padding: 20px;
-        border-radius: 10px;
-    }
-    .sidebar .sidebar-content {
-        background-color: #f8f9fa;
-    }
-    .stButton>button {
-        background-color: #007BFF;
-        color: white;
-        font-size: 16px;
-        padding: 12px 20px;
-        border-radius: 10px;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-        transition: background-color 0.3s ease;
-    }
-    .stButton>button:hover {
-        background-color: #0056b3;
-    }
-    .stSlider > div {
-        font-size: 14px;
-    }
-    .predicted-price {
-        background-color: #28a745;
-        padding: 20px;
-        font-size: 28px;
-        border-radius: 10px;
-        color: white;
-        text-align: center;
-        font-weight: bold;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    }
-    .sidebar h1 {
-        color: #007BFF;
-        font-size: 24px;
-        font-weight: bold;
-    }
-    .stRadio>div {
-        font-size: 14px;
-        color: #007BFF;
-    }
-    </style>
-    """, unsafe_allow_html=True
-)
-
 # Function to load model and scaler
 def load_model():
     try:
@@ -97,6 +42,35 @@ transmission_mapping = {"Manual": 0, "Automatic": 1}
 fuel_type_encoded = fuel_type_mapping[fuel_type]
 seller_type_encoded = seller_type_mapping[seller_type]
 transmission_encoded = transmission_mapping[transmission]
+
+# Styling the layout
+st.markdown(
+    """
+    <style>
+    .predicted-price {
+        background-color: #d4edda;
+        padding: 20px;
+        font-size: 24px;
+        border-radius: 10px;
+        color: #155724;
+        text-align: center;
+        font-weight: bold;
+    }
+    .sidebar .sidebar-content {
+        background-color: #f4f4f9;
+    }
+    .stButton>button {
+        background-color: #4CAF50;
+        color: white;
+        font-size: 16px;
+        padding: 10px 20px;
+    }
+    .stSlider > div {
+        font-size: 14px;
+    }
+    </style>
+    """, unsafe_allow_html=True
+)
 
 # Prediction Button
 if st.sidebar.button("🚀 Predict Price"):
