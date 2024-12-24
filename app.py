@@ -22,16 +22,16 @@ def load_model():
 
 # Sidebar for user input
 with st.sidebar:
-    st.image("https://www.carlogos.org/car-logos/audi-logo.png", width=150)
+    st.image("https://upload.wikimedia.org/wikipedia/commons/9/9a/Car_Logo.png", width=150)  # New placeholder image of a car logo
     st.header("📋 **Enter Car Details**")
     
-    present_price = st.slider("💰 Present Price (in lakhs)", min_value=0.0, max_value=100.0, step=0.1, value=6.0)
-    kms_driven = st.number_input("📏 Kilometers Driven", min_value=0, max_value=500000, step=100, value=3000)
-    year = st.slider("📅 Year of Purchase", min_value=2000, max_value=2023, step=1, value=2022)
+    present_price = st.slider("💰 Present Price (in lakhs)", min_value=0.0, max_value=100.0, step=0.1, value=5.0)
+    kms_driven = st.number_input("📏 Kilometers Driven", min_value=0, max_value=500000, step=100, value=10000)
+    year = st.slider("📅 Year of Purchase", min_value=2000, max_value=2023, step=1, value=2015)
     fuel_type = st.selectbox("⛽ Fuel Type", ["Petrol", "Diesel", "CNG"])
     seller_type = st.selectbox("🧑‍💼 Seller Type", ["Dealer", "Individual"])
     transmission = st.selectbox("⚙️ Transmission", ["Manual", "Automatic"])
-    owners = st.slider("👨‍👩‍👧‍👦 Number of Previous Owners", min_value=0, max_value=5, step=1, value=1)
+    owners = st.slider("👨‍👩‍👧‍👦 Number of Previous Owners", min_value=0, max_value=5, step=1, value=0)
 
 # Map categorical features
 fuel_type_mapping = {"Petrol": 0, "Diesel": 1, "CNG": 2}
@@ -85,39 +85,22 @@ if st.sidebar.button("🚀 Predict Price"):
         transmission_encoded,
         owners
     ]).reshape(1, -1)
-    
-    # Debugging: Show the input features to verify them
-    st.write("🔧 **Input Features**: ", car_features)
 
     # Scale the features using the scaler
-    try:
-        car_features_scaled = scaler.transform(car_features)
-    except Exception as e:
-        st.error(f"🚨 **Error in scaling features**: {str(e)}")
-        st.stop()
-    
-    # Debugging: Show the scaled features
-    st.write("🔧 **Scaled Features**: ", car_features_scaled)
+    car_features_scaled = scaler.transform(car_features)
     
     # Predict the car price
-    try:
-        predicted_price = model.predict(car_features_scaled)[0]
-    except Exception as e:
-        st.error(f"🚨 **Error in prediction**: {str(e)}")
-        st.stop()
-
-    # Ensure the price is not negative
-    predicted_price = max(predicted_price, 0)
+    predicted_price = model.predict(car_features_scaled)[0]
     
-    # Format the price with commas and correct "Lakhs" label
-    formatted_price = f"₹ {predicted_price:,.2f} Lakhs"
+    # Adjusting prediction value and converting it to lakhs
+    predicted_price_in_lakhs = predicted_price / 100  # Convert from thousands to lakhs
     
     # Display the predicted price
     st.subheader("🔮 **Predicted Selling Price**")
     st.markdown(
         f"""
         <div class="predicted-price">
-        💲 {formatted_price}
+        💲 ₹ {predicted_price_in_lakhs:,.2f} Lakhs
         </div>
         """, unsafe_allow_html=True
     )
