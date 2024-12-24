@@ -3,86 +3,26 @@ import numpy as np
 import joblib
 from sklearn.preprocessing import StandardScaler
 
-# Set Streamlit page configuration (this should be the first command)
+# Set the page configuration and title
 st.set_page_config(page_title="Car Price Prediction", layout="wide", page_icon="🚗")
-
-# Custom CSS for styling
-st.markdown("""
-    <style>
-        body {
-            background-color: #f4f7fa;
-            font-family: 'Arial', sans-serif;
-        }
-        .stButton > button {
-            background-color: #4CAF50;
-            color: white;
-            font-size: 18px;
-            border-radius: 10px;
-            padding: 10px 20px;
-        }
-        .stButton > button:hover {
-            background-color: #45a049;
-        }
-        .stSlider, .stNumberInput, .stSelectbox {
-            font-size: 16px;
-            margin: 10px 0;
-        }
-        .header {
-            color: #2a4d56;
-            font-size: 28px;
-            font-weight: bold;
-        }
-        .section-header {
-            color: #2a4d56;
-            font-size: 22px;
-        }
-        .section-content {
-            font-size: 16px;
-            color: #555555;
-        }
-        .output {
-            font-size: 30px;
-            color: #ff5733;
-            font-weight: bold;
-        }
-        .predicted-price {
-            background-color: #d4edda;
-            padding: 20px;
-            font-size: 24px;
-            border-radius: 10px;
-            color: #155724;
-            text-align: center;
-            font-weight: bold;
-        }
-        .error-message {
-            background-color: #f8d7da;
-            padding: 20px;
-            font-size: 18px;
-            color: #721c24;
-            border-radius: 10px;
-            text-align: center;
-        }
-    </style>
-""", unsafe_allow_html=True)
-
-# App title and configuration
 st.title("🚗 **Car Price Prediction App**")
 
-# Function to load model and scaler
+# Load the trained model and scaler
 def load_model():
     try:
-        model = joblib.load('lasso_model.pkl')  # Ensure the file is in the same directory
-        scaler = joblib.load('scaler.pkl')      # Ensure the file is in the same directory
+        model = joblib.load('random_forest_model.pkl')  # Load trained RandomForest model
+        scaler = joblib.load('scaler.pkl')              # Load the scaler
         return model, scaler
     except FileNotFoundError:
-        st.markdown('<div class="error-message">🚨 **Error:** Model or Scaler file not found. Please ensure the files "lasso_model.pkl" and "scaler.pkl" are present.</div>', unsafe_allow_html=True)
+        st.error("🚨 **Error:** Model or Scaler file not found. Please ensure the files 'random_forest_model.pkl' and 'scaler.pkl' are present.")
         st.stop()
 
 # Sidebar for user input
 with st.sidebar:
-    st.image("https://img.icons8.com/ios/50/000000/car.png", width=50)
+    st.image("https://upload.wikimedia.org/wikipedia/commons/thumb/3/30/Volkswagen_logo_2019.svg/800px-Volkswagen_logo_2019.svg.png", width=150)  # Changed to VW logo
     st.header("📋 **Enter Car Details**")
-    present_price = st.slider("💰 Purchase Price (in lakhs)", min_value=0.0, max_value=100.0, step=0.1, value=5.0)
+    
+    purchase_price = st.slider("💰 Purchase Price (in lakhs)", min_value=0.0, max_value=100.0, step=0.1, value=5.0)
     kms_driven = st.number_input("📏 Kilometers Driven", min_value=0, max_value=500000, step=100, value=10000)
     year = st.slider("📅 Year of Purchase", min_value=2000, max_value=2023, step=1, value=2015)
     fuel_type = st.selectbox("⛽ Fuel Type", ["Petrol", "Diesel", "CNG"])
@@ -90,7 +30,7 @@ with st.sidebar:
     transmission = st.selectbox("⚙️ Transmission", ["Manual", "Automatic"])
     owners = st.slider("👨‍👩‍👧‍👦 Number of Previous Owners", min_value=0, max_value=5, step=1, value=0)
 
-# Map categorical features
+# Mapping categorical variables to numeric values
 fuel_type_mapping = {"Petrol": 0, "Diesel": 1, "CNG": 2}
 seller_type_mapping = {"Dealer": 0, "Individual": 1}
 transmission_mapping = {"Manual": 0, "Automatic": 1}
@@ -99,15 +39,44 @@ fuel_type_encoded = fuel_type_mapping[fuel_type]
 seller_type_encoded = seller_type_mapping[seller_type]
 transmission_encoded = transmission_mapping[transmission]
 
+# Styling the layout
+st.markdown(
+    """
+    <style>
+    .predicted-price {
+        background-color: #d4edda;
+        padding: 20px;
+        font-size: 24px;
+        border-radius: 10px;
+        color: #155724;
+        text-align: center;
+        font-weight: bold;
+    }
+    .sidebar .sidebar-content {
+        background-color: #f4f4f9;
+    }
+    .stButton>button {
+        background-color: #4CAF50;
+        color: white;
+        font-size: 16px;
+        padding: 10px 20px;
+    }
+    .stSlider > div {
+        font-size: 14px;
+    }
+    </style>
+    """, unsafe_allow_html=True
+)
+
 # Prediction Button
 if st.sidebar.button("🚀 Predict Price"):
     model, scaler = load_model()
     
     # Prepare input data for prediction
     car_features = np.array([
-        present_price,  # Purchase price
+        purchase_price,
         kms_driven,
-        2024 - year,  # Current year minus purchase year
+        2024 - year,  # The current year minus the purchase year
         fuel_type_encoded,
         seller_type_encoded,
         transmission_encoded,
@@ -120,14 +89,15 @@ if st.sidebar.button("🚀 Predict Price"):
     # Predict the car price
     predicted_price = model.predict(car_features_scaled)[0]
     
-    # Display the predicted price in professional format
+    # Display the predicted price
     st.subheader("🔮 **Predicted Selling Price**")
     st.markdown(
         f"""
         <div class="predicted-price">
         💲 ₹ {predicted_price:,.2f} Lakhs
         </div>
-        """, unsafe_allow_html=True)
+        """, unsafe_allow_html=True
+    )
     st.balloons()
 
 # About the App and Developer sections
@@ -144,7 +114,7 @@ if menu == "About App":
         - Fuel type, seller type, and transmission.
         - Number of previous owners.
 
-        The model used is a **Lasso Regression** trained on a car sales dataset.
+        The model used is a **Random Forest Regressor** trained on a car sales dataset.
         """
     )
 
@@ -154,7 +124,7 @@ elif menu == "About Developer":
         """
         - **Name:** Gurjap Singh
         - **Age:** 17
-        - **Enthusiast in AI and Machine Learning**
-        - **[LinkedIn](https://www.linkedin.com/in/gurjap-singh-46696332a/)**
+        - **Skills:** Python, Data Science, Machine Learning, Web Development (Streamlit)
+        - **Contact:** gurjap.singh@example.com
         """
     )
