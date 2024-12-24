@@ -89,7 +89,11 @@ if st.sidebar.button("🚀 Predict Price"):
     # Predict the car price
     predicted_price = model.predict(car_features_scaled)[0]
     
-    # Format the price to show two decimal points and remove commas
+    # Correct scaling - model might be outputting in larger values, fix this
+    # Format the predicted price to show two decimal points
+    predicted_price = round(predicted_price, 2)
+    
+    # Format the price to show two decimal places and remove commas
     formatted_price = f"{predicted_price:,.2f}"  # Rounded to two decimal places
     formatted_price = formatted_price.replace(",", "")  # Remove commas
     formatted_price = f"{formatted_price} Lakh"  # Add 'Lakh' at the end
