@@ -22,7 +22,7 @@ def load_model():
 
 # Sidebar for user input
 with st.sidebar:
-    st.image("https://upload.wikimedia.org/wikipedia/commons/9/9a/Car_Logo.png", width=150)  # New placeholder image of a car logo
+    st.image("https://www.iconfinder.com/icons/1471473/car-vehicle-transport-icon", width=150)
     st.header("📋 **Enter Car Details**")
     
     present_price = st.slider("💰 Present Price (in lakhs)", min_value=0.0, max_value=100.0, step=0.1, value=5.0)
@@ -79,7 +79,7 @@ if st.sidebar.button("🚀 Predict Price"):
     car_features = np.array([
         present_price,
         kms_driven,
-        2024 - year,
+        2024 - year,  # Age of the car
         fuel_type_encoded,
         seller_type_encoded,
         transmission_encoded,
@@ -89,18 +89,15 @@ if st.sidebar.button("🚀 Predict Price"):
     # Scale the features using the scaler
     car_features_scaled = scaler.transform(car_features)
     
-    # Predict the car price
+    # Predict the car price (current market price)
     predicted_price = model.predict(car_features_scaled)[0]
-    
-    # Adjusting prediction value and converting it to lakhs
-    predicted_price_in_lakhs = predicted_price / 100  # Convert from thousands to lakhs
     
     # Display the predicted price
     st.subheader("🔮 **Predicted Selling Price**")
     st.markdown(
         f"""
         <div class="predicted-price">
-        💲 ₹ {predicted_price_in_lakhs:,.2f} Lakhs
+        💲 ₹ {predicted_price:,.2f} Lakhs
         </div>
         """, unsafe_allow_html=True
     )
@@ -114,7 +111,7 @@ if menu == "About App":
     st.write(
         """
         This app predicts the selling price of used cars based on:
-        - Present price of the car.
+        - **Present price of the car** (initial purchase price).
         - Kilometers driven.
         - Year of purchase.
         - Fuel type, seller type, and transmission.
