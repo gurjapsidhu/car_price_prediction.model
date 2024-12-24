@@ -20,10 +20,11 @@ def load_model():
         st.error("🚨 **Error:** Model or Scaler file not found. Please ensure the files 'lasso_model.pkl' and 'scaler.pkl' are present.")
         st.stop()
 
-# Sidebar for user input
+# Sidebar for user input (Move menu above sliders)
 with st.sidebar:
-    st.image("https://www.iconfinder.com/icons/1471473/car-vehicle-transport-icon", width=150)
     st.header("📋 **Enter Car Details**")
+    
+    menu = st.radio("📖 **Menu**", ["About App", "About Developer"])
     
     present_price = st.slider("💰 Present Price (in lakhs)", min_value=0.0, max_value=100.0, step=0.1, value=5.0)
     kms_driven = st.number_input("📏 Kilometers Driven", min_value=0, max_value=500000, step=100, value=10000)
@@ -104,8 +105,6 @@ if st.sidebar.button("🚀 Predict Price"):
     st.balloons()
 
 # About the App and Developer sections
-menu = st.sidebar.radio("📖 **Menu**", ["About App", "About Developer"])
-
 if menu == "About App":
     st.header("📄 About the App")
     st.write(
