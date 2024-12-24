@@ -3,48 +3,6 @@ import numpy as np
 import joblib
 from sklearn.preprocessing import StandardScaler
 
-# Custom CSS for styling
-st.markdown("""
-    <style>
-        body {
-            background-color: #f4f7fa;
-            font-family: 'Arial', sans-serif;
-        }
-        .stButton > button {
-            background-color: #4CAF50;
-            color: white;
-            font-size: 18px;
-            border-radius: 10px;
-            padding: 10px 20px;
-        }
-        .stButton > button:hover {
-            background-color: #45a049;
-        }
-        .stSlider, .stNumberInput, .stSelectbox {
-            font-size: 16px;
-            margin: 10px 0;
-        }
-        .header {
-            color: #2a4d56;
-            font-size: 28px;
-            font-weight: bold;
-        }
-        .section-header {
-            color: #2a4d56;
-            font-size: 22px;
-        }
-        .section-content {
-            font-size: 16px;
-            color: #555555;
-        }
-        .output {
-            font-size: 30px;
-            color: #ff5733;
-            font-weight: bold;
-        }
-    </style>
-""", unsafe_allow_html=True)
-
 # App title and configuration
 st.set_page_config(page_title="Car Price Prediction", layout="wide", page_icon="🚗")
 st.title("🚗 **Car Price Prediction App**")
@@ -100,9 +58,9 @@ if st.sidebar.button("🚀 Predict Price"):
     # Predict the car price
     predicted_price = model.predict(car_features_scaled)[0]
     
-    # Display the predicted price in professional format
+    # Display the predicted price
     st.subheader("🔮 **Predicted Selling Price**")
-    st.markdown(f"💲 ₹ {predicted_price:,.2f} Lakhs", unsafe_allow_html=True)
+    st.markdown(f"💲 ₹ {predicted_price:,.2f} Lakhs")
     st.balloons()
 
 # About the App and Developer sections
@@ -133,3 +91,4 @@ elif menu == "About Developer":
         - **[LinkedIn](https://www.linkedin.com/in/gurjap-singh-46696332a/)**
         """
     )
+
