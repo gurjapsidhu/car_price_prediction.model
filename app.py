@@ -1,148 +1,139 @@
 import streamlit as st
 import numpy as np
 import joblib
+import pandas as pd
 from sklearn.preprocessing import StandardScaler
+import matplotlib.pyplot as plt
+import seaborn as sns
 
-# Configure page
-st.set_page_config(page_title="Car Price Prediction", page_icon="🚗", layout="wide")
-
-# App title
-st.title("🚗 Car Price Prediction App")
-
-# Sidebar menu at the top
-st.sidebar.markdown(
-    """
-    <style>
-    .menu-title {
-        font-size: 18px;
-        color: #4CAF50;
-        font-weight: bold;
-        margin-bottom: 10px;
-    }
-    .menu-item {
-        padding: 10px 5px;
-        font-size: 14px;
-        border-radius: 5px;
-        cursor: pointer;
-        color: #4CAF50;
-        background-color: #f9f9f9;
-        margin-bottom: 5px;
-    }
-    .menu-item:hover {
-        background-color: #4CAF50;
-        color: white;
-    }
-    .sidebar-section {
-        margin-bottom: 20px;
-    }
-    .prediction-box {
-        background-color: #d4edda;
-        padding: 15px;
-        border-radius: 10px;
-        margin-top: 20px;
-        text-align: center;
-    }
-    .prediction-box h3 {
-        color: #155724;
-    }
-    </style>
-    """,
-    unsafe_allow_html=True,
-)
-
-st.sidebar.markdown('<div class="menu-title">Menu</div>', unsafe_allow_html=True)
-menu_selection = st.sidebar.radio(
-    "",
-    ["🏠 Home", "📊 Data Insights", "📖 About", "👨‍💻 Developer"],
-    index=0,
-    label_visibility="collapsed",
-)
-
-# Sidebar inputs
-st.sidebar.markdown('<div class="menu-title">Enter Car Details</div>', unsafe_allow_html=True)
-
-present_price = st.sidebar.number_input("Present Price (in lakhs)", min_value=0.0, step=0.1)
-kms_driven = st.sidebar.number_input("Kilometers Driven", min_value=0, step=100)
-year = st.sidebar.number_input("Year of Purchase", min_value=2000, max_value=2023, step=1)
-fuel_type = st.sidebar.selectbox("Fuel Type", ["Petrol", "Diesel", "CNG"])
-seller_type = st.sidebar.selectbox("Seller Type", ["Dealer", "Individual"])
-transmission = st.sidebar.selectbox("Transmission", ["Manual", "Automatic"])
-owners = st.sidebar.number_input("Number of Previous Owners", min_value=0, step=1)
+# App title and configuration
+st.set_page_config(page_title="Car Price Prediction", layout="wide", page_icon="🚗")
+st.title("🚗 **Car Price Prediction App**")
 
 # Function to load model and scaler
 def load_model():
     try:
-        model = joblib.load("lasso_model.pkl")
-        scaler = joblib.load("scaler.pkl")
+        model = joblib.load('lasso_model.pkl')  # Ensure the file is in the same directory
+        scaler = joblib.load('scaler.pkl')      # Ensure the file is in the same directory
         return model, scaler
     except FileNotFoundError:
-        st.error("🚨 Error: Model or Scaler file not found. Ensure 'lasso_model.pkl' and 'scaler.pkl' are in the same directory.")
+        st.error("🚨 **Error:** Model or Scaler file not found. Please ensure the files 'lasso_model.pkl' and 'scaler.pkl' are present.")
         st.stop()
 
-# Predict button
-if st.sidebar.button("Predict Price"):
-    model, scaler = load_model()
+# Sidebar for user input
+with st.sidebar:
+    st.image("https://www.carlogos.org/car-logos/audi-logo.png", width=150)
+    st.header("📋 **Enter Car Details**")
+    
+    present_price = st.slider("💰 Present Price (in lakhs)", min_value=0.0, max_value=100.0, step=0.1, value=6.0)
+    kms_driven = st.number_input("📏 Kilometers Driven", min_value=0, max_value=500000, step=100, value=3000)
+    year = st.slider("📅 Year of Purchase", min_value=2000, max_value=2023, step=1, value=2022)
+    fuel_type = st.selectbox("⛽ Fuel Type", ["Petrol", "Diesel", "CNG"])
+    seller_type = st.selectbox("🧑‍💼 Seller Type", ["Dealer", "Individual"])
+    transmission = st.selectbox("⚙️ Transmission", ["Manual", "Automatic"])
+    owners = st.slider("👨‍👩‍👧‍👦 Number of Previous Owners", min_value=0, max_value=5, step=1, value=1)
 
-    # Prepare input for prediction
-    features = np.array([
+# Map categorical features
+fuel_type_mapping = {"Petrol": 0, "Diesel": 1, "CNG": 2}
+seller_type_mapping = {"Dealer": 0, "Individual": 1}
+transmission_mapping = {"Manual": 0, "Automatic": 1}
+
+fuel_type_encoded = fuel_type_mapping[fuel_type]
+seller_type_encoded = seller_type_mapping[seller_type]
+transmission_encoded = transmission_mapping[transmission]
+
+# Styling the layout
+st.markdown(
+    """
+    <style>
+    .predicted-price {
+        background-color: #d4edda;
+        padding: 20px;
+        font-size: 24px;
+        border-radius: 10px;
+        color: #155724;
+        text-align: center;
+        font-weight: bold;
+    }
+    .sidebar .sidebar-content {
+        background-color: #f4f4f9;
+    }
+    .stButton>button {
+        background-color: #4CAF50;
+        color: white;
+        font-size: 16px;
+        padding: 10px 20px;
+    }
+    .stSlider > div {
+        font-size: 14px;
+    }
+    </style>
+    """, unsafe_allow_html=True
+)
+
+# Prediction Button
+if st.sidebar.button("🚀 Predict Price"):
+    model, scaler = load_model()
+    
+    # Prepare input data for prediction
+    car_features = np.array([
         present_price,
         kms_driven,
         2024 - year,
-        {"Petrol": 0, "Diesel": 1, "CNG": 2}[fuel_type],
-        {"Dealer": 0, "Individual": 1}[seller_type],
-        {"Manual": 0, "Automatic": 1}[transmission],
-        owners,
+        fuel_type_encoded,
+        seller_type_encoded,
+        transmission_encoded,
+        owners
     ]).reshape(1, -1)
 
-    # Scale the features
-    features_scaled = scaler.transform(features)
-
-    # Predict price and handle negatives
-    predicted_price = max(model.predict(features_scaled)[0], 0)
-
-    # Format price with commas
+    # Scale the features using the scaler
+    car_features_scaled = scaler.transform(car_features)
+    
+    # Predict the car price
+    predicted_price = model.predict(car_features_scaled)[0]
+    
+    # Ensure the price is not negative
+    predicted_price = max(predicted_price, 0)
+    
+    # Format the price with commas and correct "Lakhs" label
     formatted_price = f"₹ {predicted_price:,.2f} Lakhs"
+    
+    # Display the predicted price
+    st.subheader("🔮 **Predicted Selling Price**")
     st.markdown(
         f"""
-        <div class="prediction-box">
-            <h3>Predicted Selling Price</h3>
-            <h1>{formatted_price}</h1>
+        <div class="predicted-price">
+        💲 {formatted_price}
         </div>
-        """,
-        unsafe_allow_html=True,
+        """, unsafe_allow_html=True
+    )
+    st.balloons()
+
+# About the App and Developer sections
+menu = st.sidebar.radio("📖 **Menu**", ["About App", "About Developer"])
+
+if menu == "About App":
+    st.header("📄 About the App")
+    st.write(
+        """
+        This app predicts the selling price of used cars based on:
+        - Present price of the car.
+        - Kilometers driven.
+        - Year of purchase.
+        - Fuel type, seller type, and transmission.
+        - Number of previous owners.
+
+        The model used is a **Lasso Regression** trained on a car sales dataset.
+        """
     )
 
-# Additional menu content
-if menu_selection == "📊 Data Insights":
-    st.header("📊 Data Insights")
-    uploaded_file = st.file_uploader("Upload your dataset for analysis", type=["csv"])
-
-    if uploaded_file:
-        import pandas as pd
-        import seaborn as sns
-        import matplotlib.pyplot as plt
-
-        data = pd.read_csv(uploaded_file)
-        st.write("Dataset Preview:")
-        st.dataframe(data.head())
-
-        st.write("🚗 Fuel Type Distribution:")
-        plt.figure(figsize=(8, 6))
-        sns.countplot(data=data, x="Fuel_Type", palette="coolwarm")
-        st.pyplot(plt)
-
-        st.write("💲 Selling Price Distribution:")
-        plt.figure(figsize=(8, 6))
-        sns.histplot(data["Selling_Price"], kde=True, bins=30, color="green")
-        st.pyplot(plt)
-
-elif menu_selection == "📖 About":
-    st.header("📖 About the App")
-    st.write("This application predicts the selling price of used cars based on various features.")
-
-elif menu_selection == "👨‍💻 Developer":
+elif menu == "About Developer":
     st.header("👨‍💻 About the Developer")
-    st.write("Name: Gurjap Singh")
-    st.write("Age: 17")
-    st.write("Enthusiast in AI and Machine Learning.")
-    st.write("[LinkedIn Profile](https://www.linkedin.com/in/gurjap-singh-46696332a/)")
+    st.write(
+        """
+        - **Name:** Gurjap Singh
+        - **Age:** 17
+        - **Enthusiast in AI and Machine Learning**
+        - **[LinkedIn](https://www.linkedin.com/in/gurjap-singh-46696332a/)** 
+        """
+    )
