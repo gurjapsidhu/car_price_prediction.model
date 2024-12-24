@@ -3,6 +3,65 @@ import numpy as np
 import joblib
 from sklearn.preprocessing import StandardScaler
 
+# Custom CSS for styling
+st.markdown("""
+    <style>
+        body {
+            background-color: #f4f7fa;
+            font-family: 'Arial', sans-serif;
+        }
+        .stButton > button {
+            background-color: #4CAF50;
+            color: white;
+            font-size: 18px;
+            border-radius: 10px;
+            padding: 10px 20px;
+        }
+        .stButton > button:hover {
+            background-color: #45a049;
+        }
+        .stSlider, .stNumberInput, .stSelectbox {
+            font-size: 16px;
+            margin: 10px 0;
+        }
+        .header {
+            color: #2a4d56;
+            font-size: 28px;
+            font-weight: bold;
+        }
+        .section-header {
+            color: #2a4d56;
+            font-size: 22px;
+        }
+        .section-content {
+            font-size: 16px;
+            color: #555555;
+        }
+        .output {
+            font-size: 30px;
+            color: #ff5733;
+            font-weight: bold;
+        }
+        .predicted-price {
+            background-color: #d4edda;
+            padding: 20px;
+            font-size: 24px;
+            border-radius: 10px;
+            color: #155724;
+            text-align: center;
+            font-weight: bold;
+        }
+        .error-message {
+            background-color: #f8d7da;
+            padding: 20px;
+            font-size: 18px;
+            color: #721c24;
+            border-radius: 10px;
+            text-align: center;
+        }
+    </style>
+""", unsafe_allow_html=True)
+
 # App title and configuration
 st.set_page_config(page_title="Car Price Prediction", layout="wide", page_icon="🚗")
 st.title("🚗 **Car Price Prediction App**")
@@ -14,11 +73,12 @@ def load_model():
         scaler = joblib.load('scaler.pkl')      # Ensure the file is in the same directory
         return model, scaler
     except FileNotFoundError:
-        st.error("🚨 **Error:** Model or Scaler file not found. Please ensure the files 'lasso_model.pkl' and 'scaler.pkl' are present.")
+        st.markdown('<div class="error-message">🚨 **Error:** Model or Scaler file not found. Please ensure the files "lasso_model.pkl" and "scaler.pkl" are present.</div>', unsafe_allow_html=True)
         st.stop()
 
 # Sidebar for user input
 with st.sidebar:
+    st.image("https://img.icons8.com/ios/50/000000/car.png", width=50)
     st.header("📋 **Enter Car Details**")
     present_price = st.slider("💰 Purchase Price (in lakhs)", min_value=0.0, max_value=100.0, step=0.1, value=5.0)
     kms_driven = st.number_input("📏 Kilometers Driven", min_value=0, max_value=500000, step=100, value=10000)
@@ -58,9 +118,14 @@ if st.sidebar.button("🚀 Predict Price"):
     # Predict the car price
     predicted_price = model.predict(car_features_scaled)[0]
     
-    # Display the predicted price
+    # Display the predicted price in professional format
     st.subheader("🔮 **Predicted Selling Price**")
-    st.markdown(f"💲 ₹ {predicted_price:,.2f} Lakhs")
+    st.markdown(
+        f"""
+        <div class="predicted-price">
+        💲 ₹ {predicted_price:,.2f} Lakhs
+        </div>
+        """, unsafe_allow_html=True)
     st.balloons()
 
 # About the App and Developer sections
@@ -91,4 +156,3 @@ elif menu == "About Developer":
         - **[LinkedIn](https://www.linkedin.com/in/gurjap-singh-46696332a/)**
         """
     )
-
