@@ -4,6 +4,9 @@ import pandas as pd
 import joblib
 from sklearn.preprocessing import StandardScaler
 
+# Set the page configuration first
+st.set_page_config(page_title="Car Price Prediction", layout="wide")
+
 # Custom CSS for better UI
 st.markdown("""
     <style>
@@ -31,7 +34,6 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # App title and configuration
-st.set_page_config(page_title="Car Price Prediction", layout="wide")
 st.title("🚗 Car Price Prediction App")
 
 # Load pre-trained model and scaler with error handling
